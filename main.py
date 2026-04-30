@@ -33,10 +33,37 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
 
     return new_task
 
+@app.get("/tasks/stats")
+def get_stats(db: Session = Depends(get_db)):
+    total = db.query(models.Task).count()
+    pendientes = db.query(models.Task).filter(models.Task.status == "pendiente").count()
+    completadas = db.query(models.Task).filter(models.Task.status == "completado").count()
+
+    return{
+        "total": total,
+        "pendientes": pendientes,
+        "completadas": completadas
+    }
+
+@app.get("/tasks/paginated", response_model=list[schemas.TaskResponse])
+def get_tasks_paginated(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
+    tasks = db.query(models.Task).offset(skip).limit(limit).all()
+    return tasks
+
 ##LISTAR TAREA  
 @app.get("/tasks", response_model=list[schemas.TaskResponse])
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(models.Task).all()
+    return tasks
+
+@app.get("/tasks/search", response_model=list[schemas.TaskResponse])
+def serch_task(q: str, db: Session = Depends(get_db)):
+    tasks = db.query(models.Task).filter(
+        or_(
+            models.Task.title.ilike(f"%{q}%"),
+            models.Task.descripcion.ilike(f"%{q}%")
+        )
+    ).all()
     return tasks
 
 ##LISTAR TAREA POR ID 
@@ -78,34 +105,8 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     
     return {"message": "Tarea eliminada correctamente"}
 
-@app.get("tasks/filter/status", response_model=list[schemas.TaskResponse])
+@app.get("/tasks/filter/status", response_model=list[schemas.TaskResponse])
 def get_task_by_status(status: str, db: Session = Depends(get_db)):
     task = db.query(models.Task).filter(models.Task.status == status).all()
     return task
 
-@app.get("tasks/search", response_model=list[schemas.TaskResponse])
-def serch_task(q: str, db: Session = Depends(get_db)):
-    tasks = db.query(models.Task).filter(
-        or_(
-            models.Task.title.ilike(f"%{q}%"),
-            models.Task.descripcion.ilike(f"%{q}%")
-        )
-    ).all()
-    return tasks
-
-@app.get("/tasks/paginated", response_model=list[schemas.TaskResponse])
-def get_tasks_paginated(skip: int = 0, limit: int = 5, db: Session = Depends(get_db)):
-    tasks = db.query(models.Task).offset(skip).limit(limit).all()
-    return tasks
-
-@app.get("tasks/stats")
-def get_stats(db: Session = Depends(get_db)):
-    total = db.query(models.Task).count()
-    pendientes = db.query(models.Task).filter(models.Task.status == "pendiente").count()
-    completadas = db.query(models.Task).filter(models.Task.status == "completado").count()
-
-    return{
-        "total": total,
-        "pendientes": pendientes,
-        "completadas": completadas
-    }
