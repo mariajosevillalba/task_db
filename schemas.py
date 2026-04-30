@@ -1,14 +1,13 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 from typing import Optional
 
 VALID_STATUS= ["pendiente", "en_progreso", "completado"]
 
-class taskCreate(BaseModel):
+class TaskCreate(BaseModel):
     title: str = Field(..., min_length=5)
-    description: str = Field(..., max_length=200)
+    descripcion: str = Field(..., max_length=200)
     status: str = "pendiente"
     priority: int = Field(..., ge=1, le=3)
-
     
     @validator("status")
     def validate_status(cls, value):
@@ -18,8 +17,8 @@ class taskCreate(BaseModel):
     
 class TaskUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=5)
-    description: Optional[str] = Field(None, max_length=200)
-    status: Optional[str] = None
+    descripcion: Optional[str] = Field(None, max_length=200)
+    status: str = "pendiente"
     priority: Optional[int] = Field(None, ge=1, le=3)
 
     @validator("status")
@@ -30,13 +29,12 @@ class TaskUpdate(BaseModel):
             raise ValueError("Status incorrecto")
         return value
 
-class TaskRespose(BaseModel):
-    id:int
+class TaskResponse(BaseModel):
+    id: int
     title: str
-    description: Optional[str] = None
+    descripcion: str
     status: str
     priority: int
 
-    class Config:
-        orm_mode = True 
+    model_config = ConfigDict(from_attributes=True)
 

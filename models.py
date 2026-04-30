@@ -13,3 +13,4 @@ class Task(Base):
     priority = Column(Integer, default= 1)
     create_at = Column(DateTime, default=datetime.utcnow)
     
+    
